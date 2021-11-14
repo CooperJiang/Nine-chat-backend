@@ -1,0 +1,31 @@
+{
+  // tab 大小为2个空格
+  "editor.tabSize": 2,
+  // // 保存时格式化
+  "editor.formatOnSave": false,
+  // // 开启 vscode 文件路径导航
+  "breadcrumbs.enabled": true,
+  //  显示 markdown 中英文切换时产生的特殊字符
+  "editor.renderControlCharacters": true,
+  // eslint 检测文件类型
+  "vetur.format.defaultFormatter.html": "prettyhtml",
+  "vetur.format.defaultFormatterOptions": {
+    "js-beautify-html": {
+      "wrap_attributes": "auto"
+    },
+    "prettyhtml": {
+      "printWidth": 200,
+      "singleQuote": false,
+      "wrapAttributes": false,
+      "sortAttributes": false
+    },
+    "prettier": {
+      "semi": false,
+      "singleQuote": true
+    }
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
+}
+ 
