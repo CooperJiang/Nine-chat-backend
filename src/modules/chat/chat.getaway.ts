@@ -5,6 +5,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { getRandomId } from '../../constant/avatar';
 import { getMusicDetail, getMusciSrc } from 'src/utils/spider';
+import { getTimeSpace } from 'src/utils/tools';
+
+
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -40,7 +43,7 @@ export class WsChatGateway {
   private currentMusicLrc: any = {}; // 当前正在播放音乐的歌词
   private currentMusicSrc: any = null; // 当前正在播放歌曲的地址
   private timer: any = null; // 保持全局一个定时器
-  private chooseMusicTimeSpace: any = {}; // 记录每位用户的点歌时间 限制10s点一首
+  private chooseMusicTimeSpace: any = {}; // 记录每位用户的点歌时间 限制30s点一首
   private lastTimespace: any = {}; // 上次切歌的时间戳
 
   /* 房间创建成功后开始自动播放歌曲 */
@@ -53,7 +56,7 @@ export class WsChatGateway {
   };
   /* 初始化 */
   async afterInit() {
-    console.log('*****************websocket init ...');
+    console.log('>>>>>>>>>>>>>>> websocket init ...');
     await this.initBasc();
     this.automationFn();
   }
@@ -68,15 +71,80 @@ export class WsChatGateway {
   async handleMessage(client: Socket, data: any) {
     const { message_type, message_content } = data;
     const user_id = this.clientIdMap[client.id];
-    const userInfo = this.onlineUserInfo[user_id];
+    const user_info = this.onlineUserInfo[user_id];
     const params = { user_id, message_content, message_type, room_id: 888 };
     await this.MessageModel.save(params);
     this.socket.emit('message', {
-      data: { message_type, message_content, user_id, userInfo },
+      data: { message_type, message_content, user_id, user_info },
       msg: '有一条新消息',
     });
   }
 
+  /**
+   * @desc 客户端发起切歌的请求 判断权限 是否有权切换
+   * @param client socket
+   * @param currentMusicInfo 当前播放中的歌曲信息
+   */
+  @SubscribeMessage('cutMusic')
+  async handleCutMusic(client: Socket, data: any) {
+    const user_id = this.clientIdMap[client.id];
+    const user_info = this.onlineUserInfo[user_id];
+    const { user_role, user_nick } = user_info
+    if(!['admin'].includes(user_role)) return client.emit('tips', { code: -1, msg: '当前切歌只对管理员开放哟！' });
+    const { music_album, music_artist } = this.currentMusicInfo;
+		await this.messageNotice('info', `${user_nick} 切掉了 ${music_album}(${music_artist})`);
+		this.switchMusic();
+  }
+
+  /* 点歌操作  */
+	@SubscribeMessage('chooseMusic')
+	async handlerChooseMusic(client: Socket, musicInfo: any) {
+		const user_id = this.clientIdMap[client.id];
+		const user_info = this.onlineUserInfo[user_id];
+		const { music_name, music_artist, music_mid } = musicInfo;
+		if (this.queueMusicList.some((t) => t.music_mid === music_mid)) {
+			return client.emit('tips', { code: -1, msg: '这首歌已经在列表中啦！' });
+		}
+		/* 计算距离上次点歌时间 */
+		if (this.chooseMusicTimeSpace[user_id]) {
+			const timeDifference = getTimeSpace(this.chooseMusicTimeSpace[user_id]);
+			if (timeDifference <= 30 && !['super', 'guest', 'admin'].includes(user_info.user_role)) {
+				return client.emit('tips', { code: -1, msg: `频率过高 请在${30 - timeDifference}秒后重试` });
+			}
+		}
+		musicInfo.user_info = user_info;
+		this.queueMusicList.push(musicInfo);
+		this.chooseMusicTimeSpace[user_id] = getTimeSpace();
+		client.emit('tips', { code: 1, msg: '恭喜您点歌成功' });
+		this.socket.emit('chooseMusic', {
+			code: 1,
+			queue_music_list: this.queueMusicList,
+			msg: `${user_info.user_nick} 点了一首 ${music_name}(${music_artist})`,
+		});
+	}
+
+  /* 移除已点歌曲  */
+	@SubscribeMessage('removeQueueMusic')
+	async handlerRemoveQueueMusic(client: Socket, data: any) {
+		const user_id = this.clientIdMap[client.id];
+		const { music_mid, music_name, music_artist, user_info } = data;
+    const { user_role } = user_info
+    if(!['admin'].includes(user_role) && user_id !== user_info.user_id) {
+      return client.emit('tips', { code: -1, msg: '非管理员只能移除掉自己点的歌曲哟...' });
+    }
+    const delIndex = this.queueMusicList.findIndex((t) => t.music_mid === music_mid);
+    this.queueMusicList.splice(delIndex, 1);
+    client.emit('tips', { code: 1, msg: `成功移除了歌单中的 ${music_name}(${music_artist})` });
+    this.socket.emit('chooseMusic', {
+      code: 1,
+      queue_music_list: this.queueMusicList,
+      msg: `${user_info.user_nick} 移除了歌单中的 ${music_name}(${music_artist})`,
+    });
+	}
+
+  /* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 下面是方法、不属于客户端提交的事件 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+  /* 初始化统计数据库有多少音乐、随机播放的区间就是1-数据量 */
   async initBasc() {
     const musicCount = await this.MusicModel.count();
     this.maxCount = musicCount;
@@ -93,27 +161,24 @@ export class WsChatGateway {
       const { music_artist, music_album } = music_info;
       this.queueMusicList.shift(); // 移除掉队列的第一首歌
       this.socket.emit('switchMusic', {
-        data: {
+        musicInfo: {
           music_info: this.currentMusicInfo,
           music_src: this.currentMusicSrc,
           music_lrc: this.currentMusicLrc,
           queue_music_list: this.queueMusicList,
         },
-        msg: `正在播放${
-          user_info ? user_info.user_nick : '系统随机'
-        }点播的 ${music_album}(${music_artist})`,
+        msg: `正在播放${user_info ? user_info.user_nick : '系统随机' }点播的 ${music_album}(${music_artist})`,
       });
       this.lastTimespace = new Date().getTime();
       clearTimeout(this.timer);
-      console.log(this.currentMusicInfo.music_duration, '多少秒后重新播放');
       this.timer = setTimeout(() => {
-        console.log('自动切歌了');
         this.automationFn();
       }, this.currentMusicInfo.music_duration * 1000); /* 这首歌时长，到达这个时长自动切歌 */
     } catch (error) {
       this.queueMusicList.shift(); // 移除掉队列的第一首歌
       this.switchMusic();
-      return this.messageNotice('info', `${error?.response?.data?.msg}`);
+      // return this.messageNotice('info', `该歌曲为付费内容，请下载酷我音乐客户端后付费收听! `);
+      return this.messageNotice('info', `当前歌曲暂时无法播放、点首其他歌曲吧! `);
     }
   }
 
@@ -158,11 +223,12 @@ export class WsChatGateway {
       user_avatar,
       user_role,
       user_sign,
+      user_id
     };
     await this.initRoom(client, user_id, user_nick);
     this.socket.emit('online', {
       code: ChatCode.success,
-      data: this.onlineUserInfo,
+      onlineUser: this.onlineUserInfo,
       msg: `来自${address}的${user_nick}进入房间了`,
     });
   }

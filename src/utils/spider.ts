@@ -164,7 +164,7 @@ export const getMusicDetail = async (mid) => {
     const { lrclist } = lrcData.data;
     const {
       artist,
-      pic120: pic,
+      pic120,
       duration,
       score100,
       album,
@@ -175,10 +175,11 @@ export const getMusicDetail = async (mid) => {
       music_lrc: lrclist,
       music_info: {
         music_artist: artist,
-        music_pic: pic,
+        music_pic120: pic120,
         music_duration: duration,
         music_score100: score100,
         music_album: album,
+        music_name: album,
         music_songTimeMinutes: songTimeMinutes,
         music_mid: mid,
       },
