@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MessageEntity } from './message.entity';
 import { Injectable } from '@nestjs/common';
 import { Repository, In } from 'typeorm';
+import { requestHtml } from 'src/utils/spider';
 
 @Injectable()
 export class ChatService {
@@ -14,7 +15,7 @@ export class ChatService {
   ) {}
 
   async history(params) {
-    const { page = 1, pagesize = 100 } = params;
+    const { page = 1, pagesize = 300 } = params;
     const messageInfo = await this.MessageModel.find({
       order: { id: 'DESC' },
       skip: (page - 1) * pagesize,
@@ -31,8 +32,22 @@ export class ChatService {
     userInfos.forEach((t: any) => (t.user_id = t.id));
     messageInfo.forEach(
       (t: any) =>
-        (t.userInfo = userInfos.find((k: any) => k.user_id === t.user_id)),
+        (t.user_info = userInfos.find((k: any) => k.user_id === t.user_id)),
     );
     return messageInfo.reverse();
+  }
+
+  async emoticon(params) {
+    const { keyword } = params;
+    const url = `https://www.pkdoutu.com/search?keyword=${encodeURIComponent(
+      keyword,
+    )}`;
+    const $ = await requestHtml(url);
+    const list = [];
+    $('.search-result .pic-content .random_picture a').each((index, node) => {
+      const url = $(node).find('img').attr('data-original');
+      url && list.push(url);
+    });
+    return list;
   }
 }

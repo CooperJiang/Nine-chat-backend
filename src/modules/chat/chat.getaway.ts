@@ -7,7 +7,6 @@ import { getRandomId } from '../../constant/avatar';
 import { getMusicDetail, getMusciSrc } from 'src/utils/spider';
 import { getTimeSpace } from 'src/utils/tools';
 
-
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -89,58 +88,76 @@ export class WsChatGateway {
   async handleCutMusic(client: Socket, data: any) {
     const user_id = this.clientIdMap[client.id];
     const user_info = this.onlineUserInfo[user_id];
-    const { user_role, user_nick } = user_info
-    if(!['admin'].includes(user_role)) return client.emit('tips', { code: -1, msg: '当前切歌只对管理员开放哟！' });
+    const { user_role, user_nick } = user_info;
+    /* 默认所有人可以切歌  需要管理员切歌或者其他限制在这里添加 */
+    // if (!['admin'].includes(user_role)) return client.emit('tips', {  code: -1, msg: '当前切歌只对管理员开放哟！'});
     const { music_album, music_artist } = this.currentMusicInfo;
-		await this.messageNotice('info', `${user_nick} 切掉了 ${music_album}(${music_artist})`);
-		this.switchMusic();
+    await this.messageNotice(
+      'info',
+      `${user_nick} 切掉了 ${music_album}(${music_artist})`,
+    );
+    this.switchMusic();
   }
 
   /* 点歌操作  */
-	@SubscribeMessage('chooseMusic')
-	async handlerChooseMusic(client: Socket, musicInfo: any) {
-		const user_id = this.clientIdMap[client.id];
-		const user_info = this.onlineUserInfo[user_id];
-		const { music_name, music_artist, music_mid } = musicInfo;
-		if (this.queueMusicList.some((t) => t.music_mid === music_mid)) {
-			return client.emit('tips', { code: -1, msg: '这首歌已经在列表中啦！' });
-		}
-		/* 计算距离上次点歌时间 */
-		if (this.chooseMusicTimeSpace[user_id]) {
-			const timeDifference = getTimeSpace(this.chooseMusicTimeSpace[user_id]);
-			if (timeDifference <= 30 && !['super', 'guest', 'admin'].includes(user_info.user_role)) {
-				return client.emit('tips', { code: -1, msg: `频率过高 请在${30 - timeDifference}秒后重试` });
-			}
-		}
-		musicInfo.user_info = user_info;
-		this.queueMusicList.push(musicInfo);
-		this.chooseMusicTimeSpace[user_id] = getTimeSpace();
-		client.emit('tips', { code: 1, msg: '恭喜您点歌成功' });
-		this.socket.emit('chooseMusic', {
-			code: 1,
-			queue_music_list: this.queueMusicList,
-			msg: `${user_info.user_nick} 点了一首 ${music_name}(${music_artist})`,
-		});
-	}
+  @SubscribeMessage('chooseMusic')
+  async handlerChooseMusic(client: Socket, musicInfo: any) {
+    const user_id = this.clientIdMap[client.id];
+    const user_info = this.onlineUserInfo[user_id];
+    const { music_name, music_artist, music_mid } = musicInfo;
+    if (this.queueMusicList.some((t) => t.music_mid === music_mid)) {
+      return client.emit('tips', { code: -1, msg: '这首歌已经在列表中啦！' });
+    }
+    /* 计算距离上次点歌时间 */
+    if (this.chooseMusicTimeSpace[user_id]) {
+      const timeDifference = getTimeSpace(this.chooseMusicTimeSpace[user_id]);
+      if (
+        timeDifference <= 15 &&
+        !['super', 'guest', 'admin'].includes(user_info.user_role)
+      ) {
+        return client.emit('tips', {
+          code: -1,
+          msg: `频率过高 请在${15 - timeDifference}秒后重试`,
+        });
+      }
+    }
+    musicInfo.user_info = user_info;
+    this.queueMusicList.push(musicInfo);
+    this.chooseMusicTimeSpace[user_id] = getTimeSpace();
+    client.emit('tips', { code: 1, msg: '恭喜您点歌成功' });
+    this.socket.emit('chooseMusic', {
+      code: 1,
+      queue_music_list: this.queueMusicList,
+      msg: `${user_info.user_nick} 点了一首 ${music_name}(${music_artist})`,
+    });
+  }
 
   /* 移除已点歌曲  */
-	@SubscribeMessage('removeQueueMusic')
-	async handlerRemoveQueueMusic(client: Socket, data: any) {
-		const user_id = this.clientIdMap[client.id];
-		const { music_mid, music_name, music_artist, user_info } = data;
-    const { user_role } = user_info
-    if(!['admin'].includes(user_role) && user_id !== user_info.user_id) {
-      return client.emit('tips', { code: -1, msg: '非管理员只能移除掉自己点的歌曲哟...' });
+  @SubscribeMessage('removeQueueMusic')
+  async handlerRemoveQueueMusic(client: Socket, data: any) {
+    const user_id = this.clientIdMap[client.id];
+    const { music_mid, music_name, music_artist, user_info } = data;
+    const { user_role } = user_info;
+    if (!['admin'].includes(user_role) && user_id !== user_info.user_id) {
+      return client.emit('tips', {
+        code: -1,
+        msg: '非管理员只能移除掉自己点的歌曲哟...',
+      });
     }
-    const delIndex = this.queueMusicList.findIndex((t) => t.music_mid === music_mid);
+    const delIndex = this.queueMusicList.findIndex(
+      (t) => t.music_mid === music_mid,
+    );
     this.queueMusicList.splice(delIndex, 1);
-    client.emit('tips', { code: 1, msg: `成功移除了歌单中的 ${music_name}(${music_artist})` });
+    client.emit('tips', {
+      code: 1,
+      msg: `成功移除了歌单中的 ${music_name}(${music_artist})`,
+    });
     this.socket.emit('chooseMusic', {
       code: 1,
       queue_music_list: this.queueMusicList,
       msg: `${user_info.user_nick} 移除了歌单中的 ${music_name}(${music_artist})`,
     });
-	}
+  }
 
   /* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 下面是方法、不属于客户端提交的事件 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 
@@ -167,7 +184,9 @@ export class WsChatGateway {
           music_lrc: this.currentMusicLrc,
           queue_music_list: this.queueMusicList,
         },
-        msg: `正在播放${user_info ? user_info.user_nick : '系统随机' }点播的 ${music_album}(${music_artist})`,
+        msg: `正在播放${
+          user_info ? user_info.user_nick : '系统随机'
+        }点播的 ${music_album}(${music_artist})`,
       });
       this.lastTimespace = new Date().getTime();
       clearTimeout(this.timer);
@@ -178,7 +197,10 @@ export class WsChatGateway {
       this.queueMusicList.shift(); // 移除掉队列的第一首歌
       this.switchMusic();
       // return this.messageNotice('info', `该歌曲为付费内容，请下载酷我音乐客户端后付费收听! `);
-      return this.messageNotice('info', `当前歌曲暂时无法播放、点首其他歌曲吧! `);
+      return this.messageNotice(
+        'info',
+        `当前歌曲暂时无法播放、点首其他歌曲吧! `,
+      );
     }
   }
 
@@ -223,7 +245,7 @@ export class WsChatGateway {
       user_avatar,
       user_role,
       user_sign,
-      user_id
+      user_id,
     };
     await this.initRoom(client, user_id, user_nick);
     this.socket.emit('online', {

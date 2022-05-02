@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 // import { emoticonSearchDto } from './dto/search.dto';
@@ -13,8 +13,8 @@ export class ChatController {
     return this.ChatService.history(params);
   }
 
-  // @Get('/emoticon')
-  // emoticon(@Query() params: emoticonSearchDto){
-  //   return this.ChatService.emoticon(params)
-  // }
+  @Get('/emoticon')
+  emoticon(@Query() params) {
+    return this.ChatService.emoticon(params);
+  }
 }
