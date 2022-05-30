@@ -18,33 +18,34 @@ export class MusicService {
    * @desc 模拟初始化获取音乐 查看结果
    */
   async mockQueryMusic() {
-    const musicList = await initMusicSheet({ classPage: 1, classPageSize: 3 });
+    const musicList = await initMusicSheet({ page: 1, pageSize: 3 });
     return musicList;
   }
 
   /**
    * @desc 项目启动的时候初始化一下基础歌单,如果歌单没有歌曲、就会去加载一部分音乐
-   * @params classPage 分类第一页 默认1
-   * @paramasclassPageSize 分类一页要多少条 默认3条
-   *     一个分类下默认拿30首歌曲 3个分类就是90 自己配置默认数量即可 默认存入歌单90首
+   * @params page 歌单第一页 默认1
+   * @params pageSize 需要几个歌单 默认3个
+   *     一个歌单下默认拿30首歌曲 3个歌单就是90 自己配置默认数量即可 默认存入歌单90首
    *     用于没有人点歌的时候随机播放的歌曲
-   * returns musicList [] 返回歌曲列表
+   *     想要自己选歌单 参考此页面  https://kuwo.cn/playlists  修改page pageSize即可 只用于项目初始化
+   * @returns musicList [] 返回歌曲列表
    */
   async initMusicList() {
-    const params = { classPage: 1, classPageSize: 3 };
+    const params = { page: 1, pageSize: 3 };
     const musicCount = await this.MusicModel.count();
     if (musicCount) {
-      return console.log(`已经有${musicCount}首音乐了、无需初始化歌单了！`);
+      return console.log(
+        `当前曲库共有${musicCount}首音乐，初始化会默认填充曲库，具体添加方法查看readme，关闭提示请注释`,
+      );
     }
     const musicList = await initMusicSheet(params);
-    await this.MusicModel.save(
-      musicList,
-    ); /* 歌曲多的时候耗时貌似很长 可以相对减少或者分批存入 */
+    await this.MusicModel.save(musicList);
+    /* 歌曲多的时候耗时貌似很长 可以相对减少或者分批存入 */
     musicList.length &&
       console.log(
         `>>>>>>>>>>>>> 初始化歌单成功、共获取${musicList.length}首歌曲。`,
       );
-
     return musicList;
   }
 
@@ -62,9 +63,9 @@ export class MusicService {
             rid: music_mid,
             duration: music_duration,
             album: music_album,
-            artist: music_artist,
+            artist: music_singer,
             albumpic: music_albumpic,
-            pic120: music_pic120,
+            pic120: music_cover,
             name: music_name,
             hasmv: music_hasmv,
           } = t;
@@ -72,9 +73,9 @@ export class MusicService {
             music_mid,
             music_duration,
             music_album,
-            music_artist,
+            music_singer,
             music_albumpic,
-            music_pic120,
+            music_cover,
             music_name,
             music_hasmv,
           };
@@ -93,8 +94,7 @@ export class MusicService {
    * @returns
    */
   async collectMusic(payload, params) {
-    const { music_mid, music_pic120, music_artist, music_album, music_name } =
-      params;
+    const { music_mid } = params;
     const { user_id, user_role } = payload;
     const c = await this.CollectModel.count({
       where: { music_mid, user_id, is_delete: 1 },
@@ -102,14 +102,7 @@ export class MusicService {
     if (c > 0) {
       throw new HttpException(`您已经收藏过这首歌了！`, HttpStatus.BAD_REQUEST);
     }
-    const music: any = {
-      music_mid,
-      music_pic120,
-      music_artist,
-      music_album,
-      music_name,
-      user_id,
-    };
+    const music = Object.assign({ user_id }, params);
     await this.CollectModel.save(music);
     user_role === 'admin' && (music.is_recommend = 1);
     const m = await this.MusicModel.count({ where: { music_mid } });
@@ -150,11 +143,18 @@ export class MusicService {
     }
   }
 
-  /* 获取热门歌曲 */
-  async hot() {
-    return await this.MusicModel.find({
-      where: { is_recommend: 1 },
+  /**
+   * @desc 获取热门歌曲 拿到当前房主收藏的音乐作为推荐音乐 userId此处为管理房主id，请注意自己预设时候的id
+   * @returns
+   */
+  async hot(params) {
+    const { page = 1, pagesize = 30, user_id = 1 } = params;
+    return await this.CollectModel.find({
+      where: { user_id, is_delete: 1 },
       order: { id: 'DESC' },
+      skip: (page - 1) * pagesize,
+      take: pagesize,
+      cache: true,
     });
   }
 }

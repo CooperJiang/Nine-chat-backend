@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsInt, IsOptional, IsEnum } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class musicDto {

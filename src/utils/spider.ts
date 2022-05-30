@@ -120,16 +120,18 @@ export const spiderKuWoHotMusic = async (id = 1082685104) => {
 };
 
 /**
- * @desc 获取到首页的推荐里面的所有分类的分类Id
- *       默认拿3个分类、需要更多自己配置页码 一份分类会拿到前30首  默认初始化拿90首 需要更多自己配置页码
+ * @desc 获取到首页的推荐里面的所有歌单的Id
+ *       默认拿前3个歌单、需要更多自己配置页码 一份分类会拿到前30首  默认初始化拿90首 需要更多自己配置页码
+ *       参考此页面  https://kuwo.cn/playlists
+ * return 歌单ids
  */
-export const getRecommendMusicClass = async (page = 1, pagesize = 3) => {
+export const getMusicSheetIds = async (page = 1, pagesize = 3) => {
   const reqId = 'be7f2ce0-4518-11ec-b987-313c77db29de';
   const url = `https://www.kuwo.cn/api/www/classify/playlist/getRcmPlayList?pn=${page}&rn=${pagesize}&order=new&httpsStatus=1&reqId=${reqId}`;
   try {
     const res: any = await requestInterface(url);
-    const RecommendMusicId = res.data.data.map((t) => t.id);
-    return RecommendMusicId;
+    const recommendMusicClassId = res.data.data.map((t) => t.id);
+    return recommendMusicClassId;
   } catch (error) {
     return [];
   }
@@ -138,17 +140,22 @@ export const getRecommendMusicClass = async (page = 1, pagesize = 3) => {
 /**
  * @desc 结合上面两个方法我们可以一次获得多个分类的音乐用于初始化歌单 具体数量自己配置
  */
-export const initMusicSheet = async ({ classPage = 1, classPageSize = 3 }) => {
-  const recommnetClassId = await getRecommendMusicClass(
-    classPage,
-    classPageSize,
-  );
+export const initMusicSheet = async ({ page = 1, pageSize = 3 }) => {
+  /* 拿到推荐页面的歌单列表  https://kuwo.cn/playlists */
+  const recommnetClassIds = await getMusicSheetIds(page, pageSize);
   const task = [];
-  recommnetClassId.forEach((id) => task.push(spiderKuWoHotMusic(id)));
+  recommnetClassIds.forEach((id) => task.push(spiderKuWoHotMusic(id)));
   const result = await Promise.all(task);
-  let allMusic = [];
-  result.forEach((music) => (allMusic = [...allMusic, ...music]));
-  return allMusic;
+  const sumMusic = [];
+  const cacheMusicMids = [];
+  result.forEach((musicList) => {
+    musicList.forEach((music) => {
+      !cacheMusicMids.includes(music.music_mid) && sumMusic.push(music);
+      cacheMusicMids.push(music.music_mid);
+    });
+  });
+  /* 偶尔会有重复歌曲 需要在这里去重一下 */
+  return sumMusic;
 };
 
 /**
@@ -169,19 +176,22 @@ export const getMusicDetail = async (mid) => {
       score100,
       album,
       songTimeMinutes,
+      albumpic,
       rid: mid,
     } = musicInfoData.data;
     return {
       music_lrc: lrclist,
       music_info: {
-        music_artist: artist,
-        music_pic120: pic120,
+        music_singer: artist,
+        music_cover: pic120,
+        music_albumpic: albumpic,
         music_duration: duration,
         music_score100: score100,
         music_album: album,
         music_name: album,
-        music_songTimeMinutes: songTimeMinutes,
+        music_song_time_minutes: songTimeMinutes,
         music_mid: mid,
+        choose_user_id: null,
       },
     };
   } else {

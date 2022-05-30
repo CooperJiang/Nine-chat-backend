@@ -7,6 +7,7 @@ import { searchDto } from './dto/search.dto';
 @Controller('music')
 export class MusicController {
   constructor(private readonly MusicService: MusicService) {
+    /* 初始化歌单和主房间信息 */
     this.MusicService.initMusicList();
   }
 
@@ -31,8 +32,8 @@ export class MusicController {
   }
 
   @Get('/hot')
-  hot() {
-    return this.MusicService.hot();
+  hot(@Request() req, @Query() params) {
+    return this.MusicService.hot(params);
   }
 
   @Post('/removeCollect')

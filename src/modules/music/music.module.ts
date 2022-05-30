@@ -6,7 +6,7 @@ import { MusicController } from './music.controller';
 import { MusicService } from './music.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MusicEntity,CollectEntity])],
+  imports: [TypeOrmModule.forFeature([MusicEntity, CollectEntity])],
   controllers: [MusicController],
   providers: [MusicService],
 })

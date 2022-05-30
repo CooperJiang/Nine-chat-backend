@@ -31,7 +31,8 @@ export class UserService {
       const tips = user_name == u.user_name ? '用户名' : '邮箱';
       throw new HttpException(`该${tips}已经存在了！`, HttpStatus.BAD_REQUEST);
     }
-    return await this.UserModle.save(params);
+    await this.UserModle.save(params);
+    return true;
   }
 
   /**
@@ -72,23 +73,43 @@ export class UserService {
     const u = await this.UserModle.findOne({
       where: { id },
       select: [
+        'id',
+        'user_sex',
         'user_name',
         'user_nick',
         'user_email',
         'user_avatar',
         'user_role',
         'user_sign',
-        'user_roomBg',
+        'user_room_bg',
+        'user_room_id',
       ],
     });
-    return { userInfo: Object.assign(u, { userId: id }), failure_time };
+    return { user_info: Object.assign(u, { user_id: id }), failure_time };
   }
 
   async query(params) {
     return params;
   }
 
+  /* 修改用户资料 */
   async update(payload, params) {
-    return params;
+    const { user_id } = payload;
+    /* 只能修改这些项 */
+    const whiteListKeys = [
+      'user_name',
+      'user_nick',
+      'user_sex',
+      'user_sign',
+      'user_avatar',
+      'user_room_bg',
+    ];
+    const upateInfoData: any = {};
+    whiteListKeys.forEach(
+      (key) =>
+        Object.keys(params).includes(key) && (upateInfoData[key] = params[key]),
+    );
+    await this.UserModle.update({ id: user_id }, upateInfoData);
+    return true;
   }
 }
