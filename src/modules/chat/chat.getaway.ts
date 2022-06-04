@@ -484,7 +484,7 @@ export class WsChatGateway {
       });
       if (!room_info) {
         client.emit('tips', {
-          code: -1,
+          code: -3,
           msg: '您正在尝试加入一个不存在的房间、非法操作！！！',
         });
         return client.disconnect();
