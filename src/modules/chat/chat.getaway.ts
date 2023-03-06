@@ -17,7 +17,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { verifyToken } from 'src/utils/verifyToken';
 
-@WebSocketGateway(3002, {
+@WebSocketGateway({
   path: '/chat',
   allowEIO3: true,
   cors: {
