@@ -25,20 +25,15 @@ export const requestInterface = async (
     axios({
       method,
       headers: {
-        accept: 'application/json, text/plain, */*',
-        'accept-language': 'zh-CN,zh;q=0.9',
-        'cache-control': 'no-cache',
-        csrf: 'MEWX5B55MBB',
-        pragma: 'no-cache',
-        'sec-ch-ua':
-          '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Cookie': 'Hm_lvt_cdb524f42f0ce19b169a8071123a4797=1697662592; Hm_lpvt_cdb524f42f0ce19b169a8071123a4797=1697662592; _ga=GA1.2.2131023439.1697662592; _gid=GA1.2.1362874298.1697662592; _gat=1; Hm_Iuvt_cdb524f42f0cer9b268e4v7y735ewrq2324=prwfpcQsp6d6Rzx7tyT6DmFtFz4HpFhx; _ga_ETPBRPM9ML=GS1.2.1697662592.1.1.1697662603.49.0.0',
+        'Referer': 'https://www.kuwo.cn/playlist_detail/1082685104',
+        'Secret': 'f3a6842235cf869e96ba38ad80a55e1eaaddc8e403708cc68672e145d40f0b170394efe6',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+        'sec-ch-ua': '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
         'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"macOS"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        cookie:
-          '_ga=GA1.2.1049405325.1635954830; _gid=GA1.2.2140587553.1635954830; Hm_lvt_cdb524f42f0ce19b169a8071123a4797=1635954830,1636115008; Hm_lpvt_cdb524f42f0ce19b169a8071123a4797=1636170510; _gat=1; kw_token=MEWX5B55MBB',
+        'sec-ch-ua-platform': '"macOS"'
       },
       url,
       data: Qs.stringify(param),
@@ -63,19 +58,15 @@ export const searchMusic = async (url) => {
       url,
       method: 'GET',
       headers: {
-        accept: 'application/json, text/plain, */*',
-        'accept-language': 'zh-CN,zh;q=0.9',
-        'sec-ch-ua':
-          '"Chromium";v="94", "Google Chrome";v="94", ";Not A Brand";v="99"',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Cookie': 'Hm_lvt_cdb524f42f0ce19b169a8071123a4797=1697662592; Hm_lpvt_cdb524f42f0ce19b169a8071123a4797=1697662592; _ga=GA1.2.2131023439.1697662592; _gid=GA1.2.1362874298.1697662592; _gat=1; Hm_Iuvt_cdb524f42f0cer9b268e4v7y735ewrq2324=prwfpcQsp6d6Rzx7tyT6DmFtFz4HpFhx; _ga_ETPBRPM9ML=GS1.2.1697662592.1.1.1697662603.49.0.0',
+        'Referer': 'https://www.kuwo.cn/playlist_detail/1082685104',
+        'Secret': 'f3a6842235cf869e96ba38ad80a55e1eaaddc8e403708cc68672e145d40f0b170394efe6',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+        'sec-ch-ua': '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
         'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"macOS"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        Referer: 'https://www.kuwo.cn/search/list?key=%E5%AD%A4%E5%9F%8E',
-        Cookie:
-          '_ga=GA1.2.1049405325.1635954830; _gid=GA1.2.2140587553.1635954830; gid=bc653d0b-61c5-4d69-ac7f-2ee3e87dd0ce; Hm_lvt_cdb524f42f0ce19b169a8071123a4797=1635954830,1636115008,1636207872; Hm_lpvt_cdb524f42f0ce19b169a8071123a4797=1636211110; kw_token=H77LBB1XLI; _gat=1',
-        csrf: 'H77LBB1XLI',
+        'sec-ch-ua-platform': '"macOS"'
       },
     })
       .then((res) => {

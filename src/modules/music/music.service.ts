@@ -55,27 +55,28 @@ export class MusicService {
     let musicList: any;
     try {
       const decodeKeyword = encodeURIComponent(keyword);
-      const url = `https://www.kuwo.cn/api/www/search/searchMusicBykeyWord?key=${decodeKeyword}&pn=${page}&rn=${pagesize}&httpsStatus=1&reqId=443229f0-3f29-11ec-a345-4125bd2a21d6`;
+      // const url = `https://www.kuwo.cn/search/searchMusicBykeyWord?key=${decodeKeyword}&pn=${page}&rn=${pagesize}&httpsStatus=1&reqId=443229f0-3f29-11ec-a345-4125bd2a21d6`;
+      const url = `https://www.kuwo.cn/search/searchMusicBykeyWord?vipver=1&client=kt&ft=music&cluster=0&strategy=2012&encoding=utf8&rformat=json&mobi=1&issubtitle=1&show_copyright_off=1&pn=0&rn=20&all=${decodeKeyword}`
       const res: any = await searchMusic(url);
-      if (res.code === 200) {
-        musicList = res.data.list.map((t) => {
+      if (res.abslist.length) {
+        musicList = res.abslist.map((t) => {
           const {
-            rid: music_mid,
-            duration: music_duration,
-            album: music_album,
-            artist: music_singer,
-            albumpic: music_albumpic,
-            pic120: music_cover,
-            name: music_name,
-            hasmv: music_hasmv,
+            DC_TARGETID: music_mid,
+            DURATION: music_duration,
+            ALBUM: music_album,
+            ARTIST: music_singer,
+            web_albumpic_short:  music_albumpic,
+            web_artistpic_short: music_cover,
+            NAME: music_name,
+            MVFLAG: music_hasmv,
           } = t;
           return {
             music_mid,
             music_duration,
             music_album,
             music_singer,
-            music_albumpic,
-            music_cover,
+            music_albumpic: ``,
+            music_cover: music_album ? `https://img2.kuwo.cn/star/albumcover/${music_albumpic}` : `https://img1.kuwo.cn/star/starheads/${music_cover}`,
             music_name,
             music_hasmv,
           };

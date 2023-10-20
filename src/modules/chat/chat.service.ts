@@ -85,7 +85,7 @@ export class ChatService {
       t.message_status === -1 && (t.message_type = 'info');
       t.message_content &&
         t.message_status === 1 &&
-        (t.message_content = JSON.parse(t.message_content));
+        (t.message_content = t.message_content);
     });
 
     return messageInfo.reverse();

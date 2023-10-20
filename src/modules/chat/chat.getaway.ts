@@ -329,9 +329,8 @@ export class WsChatGateway {
    */
   async switchMusic(room_id) {
     /* 获取下一首的歌曲id */
-    const { mid, user_info, music_queue_list } = await this.getNextMusicMid(
-      room_id,
-    );
+    const music: any = await this.getNextMusicMid(room_id);
+    const { mid, user_info, music_queue_list } = music
     try {
       /* 获取歌曲详细信息 */
       const { music_lrc, music_info } = await getMusicDetail(mid);
@@ -363,14 +362,15 @@ export class WsChatGateway {
       this.room_list_map[Number(room_id)].last_music_timespace =
         new Date().getTime() + music_duration * 1000;
     } catch (error) {
+      console.log('error: ', error);
       /* 如果拿的mid查询歌曲出错了 说明这个歌曲已经不能播放量  切换下一首 */
       music_queue_list.shift();
       this.switchMusic(room_id);
-      // return this.messageNotice('info', `该歌曲为付费内容，请下载酷我音乐客户端后付费收听! `);
-      return this.messageNotice(
-        'info',
-        `当前歌曲暂时无法播放、点首其他歌曲吧! `,
-      );
+      return this.messageNotice(room_id, {
+        code: 2,
+        message_type: 'info',
+        message_content: `当前歌曲 (${music_queue_list[0]?.music_name}) 为付费内容，请下载酷我音乐客户端后付费收听!`,
+      });
     }
   }
 

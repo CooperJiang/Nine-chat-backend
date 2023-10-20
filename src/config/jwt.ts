@@ -2,8 +2,9 @@
  * @desc  权限部分暂时没做扩展 只有基础权限按接口加请求方式来区分
  */
 
-export const secret = 'snine_chat';
-export const expiresIn = '24h';
+// export const secret = 'snine_chat';
+export const secret = 'chat-cooper';
+export const expiresIn = '7d';
 export const whiteList = [
   '/api/user/login',
   '/api/user/register',
