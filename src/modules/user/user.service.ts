@@ -1,5 +1,5 @@
 import { UserEntity } from './user.entity';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { hashSync, compareSync } from 'bcryptjs';
 import { randomAvatar } from './../../constant/avatar';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,9 +10,38 @@ import { JwtService } from '@nestjs/jwt';
 export class UserService {
   constructor(
     @InjectRepository(UserEntity)
-    private readonly UserModle: Repository<UserEntity>,
+    private readonly UserModel: Repository<UserEntity>,
     private readonly jwtService: JwtService,
   ) {}
+
+  async onModuleInit() {
+    await this.initAdmin();
+  }
+
+  /**
+   * @desc 初始化管理员账号
+   * @param params
+   * @returns
+   */
+  async initAdmin() {
+    const count = await this.UserModel.count({ where: { user_role: 'super' } });
+    if (count === 0) {
+      const superUser = {
+        user_name: 'super',
+        user_password: hashSync('123456'),
+        user_email: 'super@default.com',
+        user_role: 'super',
+        user_nick: '超级管理员',
+        user_avatar: randomAvatar(),
+        user_room_id: '888',
+      };
+      const user = await this.UserModel.save(superUser);
+      Logger.debug(
+        `初始化超级管理员账号成功，账号：${user.user_name}，密码：123456`,
+      );
+    }
+  }
+
   /**
    * @desc 账号注册
    * @param params
@@ -24,14 +53,14 @@ export class UserService {
     if (!user_avatar) {
       params.user_avatar = randomAvatar();
     }
-    const u: any = await this.UserModle.findOne({
+    const u: any = await this.UserModel.findOne({
       where: [{ user_name }, { user_email }],
     });
     if (u) {
       const tips = user_name == u.user_name ? '用户名' : '邮箱';
       throw new HttpException(`该${tips}已经存在了！`, HttpStatus.BAD_REQUEST);
     }
-    await this.UserModle.save(params);
+    await this.UserModel.save(params);
     return true;
   }
 
@@ -42,7 +71,7 @@ export class UserService {
    */
   async login(params): Promise<any> {
     const { user_name, user_password } = params;
-    const u: any = await this.UserModle.findOne({
+    const u: any = await this.UserModel.findOne({
       where: [{ user_name }, { user_email: user_name }],
     });
     if (!u) {
@@ -70,7 +99,7 @@ export class UserService {
 
   async getInfo(payload) {
     const { user_id: id, exp: failure_time } = payload;
-    const u = await this.UserModle.findOne({
+    const u = await this.UserModel.findOne({
       where: { id },
       select: [
         'id',
@@ -109,7 +138,7 @@ export class UserService {
       (key) =>
         Object.keys(params).includes(key) && (upateInfoData[key] = params[key]),
     );
-    await this.UserModle.update({ id: user_id }, upateInfoData);
+    await this.UserModel.update({ id: user_id }, upateInfoData);
     return true;
   }
 }

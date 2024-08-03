@@ -1,12 +1,12 @@
-import { formatOnlineUser, formatRoomlist } from './../../utils/tools';
+import { formatOnlineUser, formatRoomlist } from '../../utils/tools';
 import { RoomEntity } from './room.entity';
-import { MusicEntity } from './../music/music.entity';
+import { MusicEntity } from '../music/music.entity';
 import { MessageEntity } from './message.entity';
-import { UserEntity } from './../user/user.entity';
+import { UserEntity } from '../user/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { getRandomId } from '../../constant/avatar';
-import { getMusicDetail, getMusciSrc } from 'src/utils/spider';
+import { getMusicDetail, getMusicSrc } from 'src/utils/spider';
 import { getTimeSpace } from 'src/utils/tools';
 
 import {
@@ -38,17 +38,11 @@ export class WsChatGateway {
   ) {}
   @WebSocketServer() private socket: Server;
 
-  private max_count: any = {}; // 一共有多少首歌曲，在这个区间随机拿
   private clientIdMap: any = {}; //  记录clientId 和userId roomId的映射关系 {  client.id: { user_id, room_id }}
   private onlineUserInfo: any = {}; // 在线用户信息
   private chooseMusicTimeSpace: any = {}; // 记录每位用户的点歌时间 限制30s点一首
   private room_list_map: any = {}; // 所有的在线房间列表
   private timerList: any = {}; // 所有的在线房间列表
-
-  /* 初始化 */
-  async afterInit() {
-    await this.initBasc();
-  }
 
   /* 连接成功 */
   async handleConnection(client: Socket): Promise<any> {
@@ -316,12 +310,6 @@ export class WsChatGateway {
 
   /* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 下面是方法、不属于客户端提交的事件 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 
-  /* 初始化统计数据库有多少音乐、随机播放的区间就是1-数据量 */
-  async initBasc() {
-    const musicCount = await this.MusicModel.count();
-    this.max_count = musicCount;
-  }
-
   /**
    * @desc 切换房间歌曲
    * @param room_id 房间id
@@ -330,14 +318,21 @@ export class WsChatGateway {
   async switchMusic(room_id) {
     /* 获取下一首的歌曲id */
     const music: any = await this.getNextMusicMid(room_id);
-    const { mid, user_info, music_queue_list } = music
+    if (!music) {
+      return this.messageNotice(room_id, {
+        code: -1,
+        message_type: 'info',
+        message_content: '当前房间没有曲库，请自定义点歌吧！',
+      });
+    }
+    const { mid, user_info, music_queue_list } = music;
     try {
       /* 获取歌曲详细信息 */
       const { music_lrc, music_info } = await getMusicDetail(mid);
       /* 如果有点歌人信息，携带其id，没有标为-1系统随机点播的，切歌时用于判断是否是本人操作 */
       music_info.choose_user_id = user_info ? user_info.id : -1;
       /* 获取歌曲远程地址 */
-      const music_src = await getMusciSrc(mid);
+      const music_src = await getMusicSrc(mid);
       this.room_list_map[Number(room_id)].music_info = music_info;
       this.room_list_map[Number(room_id)].music_lrc = music_lrc;
       this.room_list_map[Number(room_id)].music_src = music_src;
@@ -362,8 +357,8 @@ export class WsChatGateway {
       this.room_list_map[Number(room_id)].last_music_timespace =
         new Date().getTime() + music_duration * 1000;
     } catch (error) {
-      console.log('error: ', error);
-      /* 如果拿的mid查询歌曲出错了 说明这个歌曲已经不能播放量  切换下一首 */
+      /* 如果拿的mid查询歌曲出错了 说明这个歌曲已经不能播放量  切换下一首 并且移除这首歌曲 */
+      this.MusicModel.delete({ music_mid: mid });
       music_queue_list.shift();
       this.switchMusic(room_id);
       return this.messageNotice(room_id, {
@@ -387,12 +382,18 @@ export class WsChatGateway {
       mid = music_queue_list[0].music_mid;
       user_info = music_queue_list[0]?.user_info;
     } else {
-      const random_id = getRandomId(1, this.max_count);
-      const rando_music: any = await this.MusicModel.findOne({ id: random_id });
+      const count = await this.MusicModel.count();
+      const randomIndex = Math.floor(Math.random() * count);
+      const music: any = await this.MusicModel.find({
+        take: 1,
+        skip: randomIndex,
+      });
+      const random_music = music[0];
       /* TODO 如果删除了db 可能导致这个随机id查不到数据，要保证不要删除tb_music的数据 或者自定义id用于随机歌曲查询 或增加一个随机歌曲的爬虫方法 */
-      if (!rando_music) {
+      if (!random_music) {
+        return;
       }
-      mid = rando_music.music_mid;
+      mid = random_music?.music_mid;
     }
     return { mid, user_info, music_queue_list };
   }
@@ -442,7 +443,7 @@ export class WsChatGateway {
         return client.emit('tips', { code: -2, msg: '您已经在别处登录了' });
       }
       /* 查询用户基础信息 */
-      const u = await this.UserModel.findOne({ id: user_id });
+      const u = await this.UserModel.findOne({ where: { id: user_id } });
       const {
         user_name,
         user_nick,

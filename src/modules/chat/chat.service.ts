@@ -2,7 +2,7 @@ import { RoomEntity } from './room.entity';
 import { UserEntity } from './../user/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MessageEntity } from './message.entity';
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Repository, In } from 'typeorm';
 import { requestHtml } from 'src/utils/spider';
 
@@ -16,6 +16,27 @@ export class ChatService {
     @InjectRepository(RoomEntity)
     private readonly RoomModel: Repository<RoomEntity>,
   ) {}
+
+  async onModuleInit() {
+    await this.initOfficialRoom();
+  }
+
+  /* 初始化官方直播间 */
+  async initOfficialRoom() {
+    const count = await this.RoomModel.count({ where: { room_id: 888 } });
+    if (count === 0) {
+      const basicRoomInfo = {
+        room_name: '官方直播间',
+        room_user_id: 1,
+        room_id: 888,
+        room_logo: 'https://imgse.com/i/pkX7PbT',
+        room_need_password: 1,
+        room_notice: '欢迎来到官方直播间',
+      };
+      const room = await this.RoomModel.save(basicRoomInfo);
+      Logger.debug('官方直播间初始化成功', room);
+    }
+  }
 
   /* 查询历史消息 */
   async history(params) {

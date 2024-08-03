@@ -3,7 +3,8 @@ import { MusicEntity } from './music.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { initMusicSheet, searchMusic } from 'src/utils/spider';
+import { getAlbumList, initMusicSheet, searchMusic } from 'src/utils/spider';
+import { addAlbumDto } from './dto/addAlbum.dto';
 
 @Injectable()
 export class MusicService {
@@ -14,37 +15,69 @@ export class MusicService {
     private readonly CollectModel: Repository<CollectEntity>,
   ) {}
 
-  /**
-   * @desc 模拟初始化获取音乐 查看结果
-   */
-  async mockQueryMusic() {
-    const musicList = await initMusicSheet({ page: 1, pageSize: 3 });
-    return musicList;
+  /* 初始化给官方聊天室将首页推荐的专辑加入到库里 */
+  async onModuleInit() {
+    await this.initMusicList();
+  }
+
+  /* 通过专辑ID添加当前专辑歌曲到曲库 */
+  async getAlbumList(params: addAlbumDto) {
+    const { page = 1, size = 20, albumId } = params;
+    const musicList = await getAlbumList({ albumId, page, size });
+    const addList = [];
+    for (const music of musicList) {
+      const { music_mid } = music;
+      const existingMusic = await this.MusicModel.findOne({
+        where: { music_mid },
+      });
+      if (!existingMusic) {
+        await this.MusicModel.save(music);
+        addList.push(music);
+      }
+    }
+    return {
+      tips: '当前为成功加入曲库的歌曲',
+      data: addList,
+    };
   }
 
   /**
-   * @desc 项目启动的时候初始化一下基础歌单,如果歌单没有歌曲、就会去加载一部分音乐
-   * @params page 歌单第一页 默认1
-   * @params pageSize 需要几个歌单 默认3个
-   *     一个歌单下默认拿30首歌曲 3个歌单就是90 自己配置默认数量即可 默认存入歌单90首
+   * @desc 项目启动的时候初始化一下基础歌单,如果歌单没有歌曲、就会去加载酷我专辑页面的前三个专辑的各30首歌曲
+   * @params pageSize 需要几个歌单 默认10个
+   *     一个歌单下默认拿10首歌曲 自己配置默认数量即可
    *     用于没有人点歌的时候随机播放的歌曲
    *     想要自己选歌单 参考此页面  https://kuwo.cn/playlists  修改page pageSize即可 只用于项目初始化
    * @returns musicList [] 返回歌曲列表
    */
   async initMusicList() {
-    const params = { page: 1, pageSize: 3 };
+    const params = { page: 1, pageSize: 10 };
     const musicCount = await this.MusicModel.count();
     if (musicCount) {
       return console.log(
         `当前曲库共有${musicCount}首音乐，初始化会默认填充曲库，具体添加方法查看readme，关闭提示请注释`,
       );
+    } else {
+      console.log(
+        `>>>>>>>>>>>>> 当前曲库没有任何音乐, 将默认为您随机添加一些歌曲。`,
+      );
     }
+
     const musicList = await initMusicSheet(params);
-    await this.MusicModel.save(musicList);
-    /* 歌曲多的时候耗时貌似很长 可以相对减少或者分批存入 */
+    const addList = [];
+    for (const music of musicList) {
+      const { music_mid } = music;
+      const existingMusic = await this.MusicModel.findOne({
+        where: { music_mid },
+      });
+      if (!existingMusic) {
+        await this.MusicModel.save(music);
+        addList.push(music);
+      }
+    }
+    /* 歌曲建议少量 可以相对减少或者分批存入 */
     musicList.length &&
       console.log(
-        `>>>>>>>>>>>>> 初始化歌单成功、共获取${musicList.length}首歌曲。`,
+        `>>>>>>>>>>>>> 初始化歌单成功、共获取${addList.length}首歌曲。`,
       );
     return musicList;
   }
@@ -55,20 +88,20 @@ export class MusicService {
     let musicList: any;
     try {
       const decodeKeyword = encodeURIComponent(keyword);
-      // const url = `https://www.kuwo.cn/search/searchMusicBykeyWord?key=${decodeKeyword}&pn=${page}&rn=${pagesize}&httpsStatus=1&reqId=443229f0-3f29-11ec-a345-4125bd2a21d6`;
-      const url = `https://www.kuwo.cn/search/searchMusicBykeyWord?vipver=1&client=kt&ft=music&cluster=0&strategy=2012&encoding=utf8&rformat=json&mobi=1&issubtitle=1&show_copyright_off=1&pn=0&rn=20&all=${decodeKeyword}`
+      const url = `https://kuwo.cn/search/searchMusicBykeyWord?client=kt&ft=music&cluster=0&strategy=2012&encoding=utf8&rformat=json&mobi=1&issubtitle=1&show_copyright_off=0&pn=${page}&rn=${pagesize}&all=${decodeKeyword}`;
       const res: any = await searchMusic(url);
       if (res.abslist.length) {
-        musicList = res.abslist.map((t) => {
+        musicList = res.abslist.map((t, index) => {
           const {
             DC_TARGETID: music_mid,
             DURATION: music_duration,
             ALBUM: music_album,
             ARTIST: music_singer,
-            web_albumpic_short:  music_albumpic,
+            web_albumpic_short: music_albumpic,
             web_artistpic_short: music_cover,
             NAME: music_name,
             MVFLAG: music_hasmv,
+            payInfo,
           } = t;
           return {
             music_mid,
@@ -76,7 +109,9 @@ export class MusicService {
             music_album,
             music_singer,
             music_albumpic: ``,
-            music_cover: music_album ? `https://img2.kuwo.cn/star/albumcover/${music_albumpic}` : `https://img1.kuwo.cn/star/starheads/${music_cover}`,
+            music_cover: music_album
+              ? `https://img2.kuwo.cn/star/albumcover/${music_albumpic}`
+              : `https://img1.kuwo.cn/star/starheads/${music_cover}`,
             music_name,
             music_hasmv,
           };

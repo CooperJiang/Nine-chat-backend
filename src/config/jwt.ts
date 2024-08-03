@@ -1,8 +1,7 @@
 /**
- * @desc  权限部分暂时没做扩展 只有基础权限按接口加请求方式来区分
+ * @desc  权限部分暂时没做扩展 只有基础权限按接口加请求方式来区分 接口多了可以加中间件与装饰器
  */
 
-// export const secret = 'snine_chat';
 export const secret = 'chat-cooper';
 export const expiresIn = '7d';
 export const whiteList = [

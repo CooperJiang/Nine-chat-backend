@@ -40,12 +40,10 @@ export class AuthGuard implements CanActivate {
    */
   private verifyToken(token: string, secret: string): Promise<any> {
     return new Promise((resolve) => {
-      console.log('token, secret: ', token, secret);
       jwt.verify(token, secret, (error, payload) => {
         if (error) {
           throw new HttpException('身份验证失败', HttpStatus.UNAUTHORIZED);
         } else {
-          console.log('payload: ', payload);
           resolve(payload);
         }
       });
