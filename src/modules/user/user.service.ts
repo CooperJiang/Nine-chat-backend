@@ -32,8 +32,8 @@ export class UserService {
         user_email: 'super@default.com',
         user_role: 'super',
         user_nick: '超级管理员',
-        user_avatar: randomAvatar(),
         user_room_id: '888',
+        user_avatar: '/basic/default-avatar.png',
       };
       const user = await this.UserModel.save(superUser);
       Logger.debug(

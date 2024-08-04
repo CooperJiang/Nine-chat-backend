@@ -18,12 +18,14 @@ export class MusicService {
   /* 初始化给官方聊天室将首页推荐的专辑加入到库里 */
   async onModuleInit() {
     await this.initMusicList();
+    // this.getAlbumList({ albumId: 3495945238 });
   }
 
   /* 通过专辑ID添加当前专辑歌曲到曲库 */
   async getAlbumList(params: addAlbumDto) {
-    const { page = 1, size = 20, albumId } = params;
+    const { page = 1, size = 99, albumId } = params;
     const musicList = await getAlbumList({ albumId, page, size });
+    console.log(`当前专辑查询到了歌曲数量为${musicList.length},排队加入中`);
     const addList = [];
     for (const music of musicList) {
       const { music_mid } = music;
@@ -35,6 +37,7 @@ export class MusicService {
         addList.push(music);
       }
     }
+    console.log('本次加入曲库的歌曲数量: ', addList.length);
     return {
       tips: '当前为成功加入曲库的歌曲',
       data: addList,
@@ -53,13 +56,9 @@ export class MusicService {
     const params = { page: 1, pageSize: 10 };
     const musicCount = await this.MusicModel.count();
     if (musicCount) {
-      return console.log(
-        `当前曲库共有${musicCount}首音乐，初始化会默认填充曲库，具体添加方法查看readme，关闭提示请注释`,
-      );
+      return console.log(`当前曲库共有${musicCount}首音乐，初始化会默认填充曲库，具体添加方法查看readme`);
     } else {
-      console.log(
-        `>>>>>>>>>>>>> 当前曲库没有任何音乐, 将默认为您随机添加一些歌曲。`,
-      );
+      console.log(`>>>>>>>>>>>>> 当前曲库没有任何音乐, 将默认为您随机添加一些歌曲。`);
     }
 
     const musicList = await initMusicSheet(params);
@@ -75,21 +74,19 @@ export class MusicService {
       }
     }
     /* 歌曲建议少量 可以相对减少或者分批存入 */
-    musicList.length &&
-      console.log(
-        `>>>>>>>>>>>>> 初始化歌单成功、共获取${addList.length}首歌曲。`,
-      );
+    musicList.length && console.log(`>>>>>>>>>>>>> 初始化歌单成功、共获取${addList.length}首歌曲。`);
     return musicList;
   }
 
   /* 查询搜索音乐 */
   async search(params) {
-    const { keyword, page = 1, pagesize = 10 } = params;
+    const { keyword } = params;
     let musicList: any;
     try {
       const decodeKeyword = encodeURIComponent(keyword);
-      const url = `https://kuwo.cn/search/searchMusicBykeyWord?client=kt&ft=music&cluster=0&strategy=2012&encoding=utf8&rformat=json&mobi=1&issubtitle=1&show_copyright_off=0&pn=${page}&rn=${pagesize}&all=${decodeKeyword}`;
+      const url = `https://kuwo.cn/search/searchMusicBykeyWord?vipver=1&client=kt&ft=music&cluster=0&strategy=2012&encoding=utf8&rformat=json&mobi=1&issubtitle=1&show_copyright_off=1&pn=0&rn=99&all=${decodeKeyword}`;
       const res: any = await searchMusic(url);
+      console.log('res.abslist.length: ', res.abslist.length);
       if (res.abslist.length) {
         musicList = res.abslist.map((t, index) => {
           const {
@@ -103,6 +100,8 @@ export class MusicService {
             MVFLAG: music_hasmv,
             payInfo,
           } = t;
+          const { limitfree, feeType } = payInfo;
+          const isPlay = Number(feeType?.vip) === 0 || Number(limitfree) === 1;
           return {
             music_mid,
             music_duration,
@@ -114,6 +113,7 @@ export class MusicService {
               : `https://img1.kuwo.cn/star/starheads/${music_cover}`,
             music_name,
             music_hasmv,
+            isPlay,
           };
         });
       }

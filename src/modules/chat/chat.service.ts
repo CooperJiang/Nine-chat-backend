@@ -29,7 +29,7 @@ export class ChatService {
         room_name: '官方直播间',
         room_user_id: 1,
         room_id: 888,
-        room_logo: 'https://imgse.com/i/pkX7PbT',
+        room_logo: '/basic/room-default-logo.png',
         room_need_password: 1,
         room_notice: '欢迎来到官方直播间',
       };

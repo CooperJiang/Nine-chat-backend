@@ -26,6 +26,9 @@ async function bootstrap() {
     Logger.log(`API服务已经启动,服务请访问:http://localhost:${port}/api`);
     Logger.log(`WebSocket服务已经启动,服务请访问:http://localhost:${port}`);
     Logger.log(`swagger已经启动,服务请访问:http://localhost:${port}/docs`);
+    Logger.log(
+      `可将前端项目打包结果放至public下直接访问服务:http://localhost:${port}`,
+    );
   });
 }
 bootstrap();

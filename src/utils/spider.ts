@@ -16,11 +16,7 @@ export const requestHtml = async (url) => {
 /**
  * @desc axios调用三方接口使用
  */
-export const requestInterface = async (
-  url,
-  param = {},
-  method: any = 'GET',
-) => {
+export const requestInterface = async (url, param = {}, method: any = 'GET') => {
   return new Promise((resolve, reject) => {
     axios({
       method,
@@ -30,12 +26,10 @@ export const requestInterface = async (
         Cookie:
           'Hm_lvt_cdb524f42f0ce19b169a8071123a4797=1697662592; Hm_lpvt_cdb524f42f0ce19b169a8071123a4797=1697662592; _ga=GA1.2.2131023439.1697662592; _gid=GA1.2.1362874298.1697662592; _gat=1; Hm_Iuvt_cdb524f42f0cer9b268e4v7y735ewrq2324=prwfpcQsp6d6Rzx7tyT6DmFtFz4HpFhx; _ga_ETPBRPM9ML=GS1.2.1697662592.1.1.1697662603.49.0.0',
         Referer: 'https://www.kuwo.cn/playlist_detail/1082685104',
-        Secret:
-          'f3a6842235cf869e96ba38ad80a55e1eaaddc8e403708cc68672e145d40f0b170394efe6',
+        Secret: 'f3a6842235cf869e96ba38ad80a55e1eaaddc8e403708cc68672e145d40f0b170394efe6',
         'User-Agent':
           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
-        'sec-ch-ua':
-          '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
+        'sec-ch-ua': '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"macOS"',
       },
@@ -67,12 +61,10 @@ export const searchMusic = async (url) => {
         Cookie:
           'Hm_lvt_cdb524f42f0ce19b169a8071123a4797=1697662592; Hm_lpvt_cdb524f42f0ce19b169a8071123a4797=1697662592; _ga=GA1.2.2131023439.1697662592; _gid=GA1.2.1362874298.1697662592; _gat=1; Hm_Iuvt_cdb524f42f0cer9b268e4v7y735ewrq2324=prwfpcQsp6d6Rzx7tyT6DmFtFz4HpFhx; _ga_ETPBRPM9ML=GS1.2.1697662592.1.1.1697662603.49.0.0',
         Referer: 'https://www.kuwo.cn/playlist_detail/1082685104',
-        Secret:
-          'f3a6842235cf869e96ba38ad80a55e1eaaddc8e403708cc68672e145d40f0b170394efe6',
+        Secret: 'f3a6842235cf869e96ba38ad80a55e1eaaddc8e403708cc68672e145d40f0b170394efe6',
         'User-Agent':
           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
-        'sec-ch-ua':
-          '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
+        'sec-ch-ua': '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"macOS"',
       },
@@ -105,15 +97,13 @@ export const getMusicSheetIds = async (page = 1, pagesize = 3) => {
       '_ga=GA1.2.680482831.1722568034; _gid=GA1.2.1552324420.1722568034; Hm_lvt_cdb524f42f0ce19b169a8071123a4797=1722568034; HMACCOUNT=FABA7B07CE51FB8D; _gat=1; Hm_lpvt_cdb524f42f0ce19b169a8071123a4797=1722569034; _ga_ETPBRPM9ML=GS1.2.1722568034.1.1.1722569053.41.0.0; Hm_Iuvt_cdb524f42f23cer9b268564v7y735ewrq2324=iGpzS5J8JQWNkyQFESxRDWry7ntfGzmi',
     Host: 'www.kuwo.cn',
     Referer: 'https://www.kuwo.cn/play_detail/7201115',
-    'Sec-Ch-Ua':
-      '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+    'Sec-Ch-Ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
     'Sec-Ch-Ua-Mobile': '?0',
     'Sec-Ch-Ua-Platform': '"macOS"',
     'Sec-Fetch-Dest': 'empty',
     'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Site': 'same-origin',
-    Secret:
-      '4a17fbd8421222139474f7df20c3e06b4d9c898573adee7e3eee0fffc1fc08e5013d8af2',
+    Secret: '4a17fbd8421222139474f7df20c3e06b4d9c898573adee7e3eee0fffc1fc08e5013d8af2',
     'User-Agent':
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
   };
@@ -125,10 +115,7 @@ export const getMusicSheetIds = async (page = 1, pagesize = 3) => {
     return listIds;
   } catch (error) {
     console.error('Error fetching music source:', error.message);
-    throw new HttpException(
-      `请求失败: ${error.message}`,
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
+    throw new HttpException(`请求失败: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   try {
@@ -174,28 +161,36 @@ export const initMusicSheet = async ({ page = 1, pageSize = 10 }) => {
  * @param mid
  */
 export const getMusicDetail = async (mid) => {
-  // const musicInfoUrl = `https://www.kuwo.cn/api/www/music/musicInfo?mid=${mid}&httpsStatus=1&reqId=0b8cd740-409f-11ec-af85-c164fd2658ed`;
   const lrcUrl = `https://m.kuwo.cn/newh5/singles/songinfoandlrc?musicId=${mid}`;
-  // const musicInfoData: any = await requestInterface(musicInfoUrl);
-  const lrcData: any = await requestInterface(lrcUrl);
-  if (lrcData.status === 200) {
-    const { lrclist, songinfo } = lrcData.data;
-    const {
-      artist,
-      pic,
-      duration,
-      score100,
-      album,
-      songTimeMinutes,
-      songName,
-      id: mid,
-    } = songinfo;
+  const headers = {
+    Accept: 'application/json, text/plain, */*',
+    'Accept-Encoding': 'gzip, deflate, br, zstd',
+    'Accept-Language': 'zh-CN,zh;q=0.9',
+    Connection: 'keep-alive',
+    Cookie:
+      '_ga=GA1.2.680482831.1722568034; _gid=GA1.2.1552324420.1722568034; Hm_lvt_cdb524f42f0ce19b169a8071123a4797=1722568034; HMACCOUNT=FABA7B07CE51FB8D; _gat=1; Hm_lpvt_cdb524f42f0ce19b169a8071123a4797=1722569034; _ga_ETPBRPM9ML=GS1.2.1722568034.1.1.1722569053.41.0.0; Hm_Iuvt_cdb524f42f23cer9b268564v7y735ewrq2324=iGpzS5J8JQWNkyQFESxRDWry7ntfGzmi',
+    Host: 'www.kuwo.cn',
+    Referer: 'https://www.kuwo.cn/play_detail/7201115',
+    'Sec-Ch-Ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"macOS"',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-origin',
+    Secret: '4a17fbd8421222139474f7df20c3e06b4d9c898573adee7e3eee0fffc1fc08e5013d8af2',
+    'User-Agent':
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  };
+  const lrcData = await axios.get(lrcUrl, { headers });
+  if (lrcData?.status === 200 || lrcData?.data?.status === 200 || !lrcData?.data?.data) {
+    const { lrclist, songinfo } = lrcData?.data?.data;
+    const { artist, pic, duration, score100, album, songTimeMinutes, songName, id: mid } = songinfo;
     return {
       music_lrc: lrclist,
       music_info: {
         music_singer: artist,
-        music_cover: pic,
-        music_albumpic: pic,
+        music_cover: pic.replace('http://img1.kwcdn.kuwo.cn', 'https://img2.kuwo.cn'),
+        music_albumpic: pic.replace('http://img1.kwcdn.kuwo.cn', 'https://img2.kuwo.cn'),
         music_duration: duration,
         music_score100: score100,
         music_album: album,
@@ -204,9 +199,10 @@ export const getMusicDetail = async (mid) => {
         music_mid: mid,
         choose_user_id: null,
       },
-      reqid: lrcData.reqid,
+      reqid: lrcData.data.reqid,
     };
   } else {
+    console.log('请求歌曲信息失败', lrcData);
     throw new HttpException(`没有找到歌曲信息！`, HttpStatus.BAD_REQUEST);
   }
 };
@@ -218,7 +214,6 @@ export const getMusicDetail = async (mid) => {
  */
 export const getMusicSrc = async (mid) => {
   const url = `https://www.kuwo.cn/api/v1/www/music/playUrl?mid=${mid}&type=music&httpsStatus=1&reqId=18a7dec3Xb4b9X4451Xb675X58849ba5e064&plat=web_www&from=`;
-
   const headers = {
     Accept: 'application/json, text/plain, */*',
     'Accept-Encoding': 'gzip, deflate, br, zstd',
@@ -228,15 +223,13 @@ export const getMusicSrc = async (mid) => {
       '_ga=GA1.2.680482831.1722568034; _gid=GA1.2.1552324420.1722568034; Hm_lvt_cdb524f42f0ce19b169a8071123a4797=1722568034; HMACCOUNT=FABA7B07CE51FB8D; _gat=1; Hm_lpvt_cdb524f42f0ce19b169a8071123a4797=1722569034; _ga_ETPBRPM9ML=GS1.2.1722568034.1.1.1722569053.41.0.0; Hm_Iuvt_cdb524f42f23cer9b268564v7y735ewrq2324=iGpzS5J8JQWNkyQFESxRDWry7ntfGzmi',
     Host: 'www.kuwo.cn',
     Referer: 'https://www.kuwo.cn/play_detail/7201115',
-    'Sec-Ch-Ua':
-      '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+    'Sec-Ch-Ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
     'Sec-Ch-Ua-Mobile': '?0',
     'Sec-Ch-Ua-Platform': '"macOS"',
     'Sec-Fetch-Dest': 'empty',
     'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Site': 'same-origin',
-    Secret:
-      '4a17fbd8421222139474f7df20c3e06b4d9c898573adee7e3eee0fffc1fc08e5013d8af2',
+    Secret: '4a17fbd8421222139474f7df20c3e06b4d9c898573adee7e3eee0fffc1fc08e5013d8af2',
     'User-Agent':
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
   };
@@ -249,11 +242,8 @@ export const getMusicSrc = async (mid) => {
       throw new HttpException(`没有找到歌曲地址！`, HttpStatus.BAD_REQUEST);
     }
   } catch (error) {
-    console.error('Error fetching music source:', error.message);
-    throw new HttpException(
-      `请求失败: ${error.message}`,
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
+    console.error('Error fetching music source:', error);
+    throw new HttpException(`请求失败: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -274,15 +264,13 @@ export const getAlbumList = async (opt) => {
       '_ga=GA1.2.680482831.1722568034; _gid=GA1.2.1552324420.1722568034; Hm_lvt_cdb524f42f0ce19b169a8071123a4797=1722568034; HMACCOUNT=FABA7B07CE51FB8D; _gat=1; Hm_lpvt_cdb524f42f0ce19b169a8071123a4797=1722569034; _ga_ETPBRPM9ML=GS1.2.1722568034.1.1.1722569053.41.0.0; Hm_Iuvt_cdb524f42f23cer9b268564v7y735ewrq2324=iGpzS5J8JQWNkyQFESxRDWry7ntfGzmi',
     Host: 'www.kuwo.cn',
     Referer: 'https://www.kuwo.cn/play_detail/7201115',
-    'Sec-Ch-Ua':
-      '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+    'Sec-Ch-Ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
     'Sec-Ch-Ua-Mobile': '?0',
     'Sec-Ch-Ua-Platform': '"macOS"',
     'Sec-Fetch-Dest': 'empty',
     'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Site': 'same-origin',
-    Secret:
-      '4a17fbd8421222139474f7df20c3e06b4d9c898573adee7e3eee0fffc1fc08e5013d8af2',
+    Secret: '4a17fbd8421222139474f7df20c3e06b4d9c898573adee7e3eee0fffc1fc08e5013d8af2',
     'User-Agent':
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
   };
@@ -311,9 +299,6 @@ export const getAlbumList = async (opt) => {
     }
   } catch (error) {
     console.error('Error fetching music source:', error.message);
-    throw new HttpException(
-      `请求失败: ${error.message}`,
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
+    throw new HttpException(`请求失败: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
